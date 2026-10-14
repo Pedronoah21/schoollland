@@ -1,0 +1,8 @@
+import { PrismaClient } from "@prisma/client";
+
+// Uma única conexão reaproveitada (evita abrir conexões a cada recarga em desenvolvimento)
+const globalParaPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+export const db = globalParaPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") globalParaPrisma.prisma = db;

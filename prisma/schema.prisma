@@ -1,0 +1,237 @@
+// Modelo de dados do Pátio Escolar — Fase 1 (secretaria, matrícula, portaria)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Perfil {
+  ADMIN
+  DIRECAO
+  SECRETARIA
+  COORDENACAO
+  FINANCEIRO
+  PROFESSOR
+  PORTARIA
+}
+
+enum Nivel {
+  INFANTIL
+  FUND1
+  FUND2
+  MEDIO
+}
+
+enum Turno {
+  MANHA
+  TARDE
+  INTEGRAL
+}
+
+enum StatusAluno {
+  PENDENTE
+  ATIVO
+  INATIVO
+}
+
+enum EtapaMatricula {
+  DOCUMENTOS
+  APROVACAO_DESCONTO
+  ASSINATURA
+  PAGAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TipoPassagem {
+  ENTRADA
+  SAIDA
+  BLOQUEIO
+}
+
+enum OrigemPassagem {
+  CATRACA
+  MANUAL
+}
+
+/// Configuração única da escola (sempre id = 1)
+model Escola {
+  id        Int      @id @default(1)
+  nome      String
+  fuso      String   @default("America/Manaus")
+  anoLetivo Int
+  criadoEm  DateTime @default(now())
+}
+
+model Usuario {
+  id          String      @id @default(cuid())
+  nome        String
+  email       String      @unique
+  senhaHash   String
+  perfil      Perfil
+  ativo       Boolean     @default(true)
+  criadoEm    DateTime    @default(now())
+  passagens   Passagem[]
+  auditorias  Auditoria[]
+}
+
+model Turma {
+  id            String      @id @default(cuid())
+  nome          String
+  nivel         Nivel
+  turno         Turno
+  ano           Int
+  capacidade    Int
+  /// Horário de início das aulas, "HH:MM"
+  entrada       String      @default("07:00")
+  toleranciaMin Int         @default(15)
+  alunos        Aluno[]
+  matriculas    Matricula[]
+
+  @@unique([nome, ano])
+}
+
+model Aluno {
+  id                String             @id @default(cuid())
+  /// Código de matrícula, gerado quando a matrícula é concluída
+  codigo            String?            @unique
+  nome              String
+  nascimento        DateTime           @db.Date
+  cpf               String?
+  alergias          String?
+  saude             String?
+  status            StatusAluno        @default(PENDENTE)
+  motivoInativo     String?
+  turmaId           String?
+  turma             Turma?             @relation(fields: [turmaId], references: [id])
+  /// Número do cartão ou crachá lido pela catraca
+  cartao            String?            @unique
+  /// Data (no fuso da escola) em que o responsável autorizou a saída sem acompanhante
+  saidaAutorizadaEm String?
+  criadoEm          DateTime           @default(now())
+  atualizadoEm      DateTime           @updatedAt
+  responsaveis      AlunoResponsavel[]
+  autorizados       Autorizado[]
+  passagens         Passagem[]
+  matriculas        Matricula[]
+
+  @@index([nome])
+  @@index([turmaId, status])
+}
+
+model Responsavel {
+  id       String             @id @default(cuid())
+  nome     String
+  cpf      String             @unique
+  telefone String
+  email    String?
+  criadoEm DateTime           @default(now())
+  alunos   AlunoResponsavel[]
+}
+
+model AlunoResponsavel {
+  alunoId       String
+  responsavelId String
+  parentesco    String
+  financeiro    Boolean     @default(false)
+  pedagogico    Boolean     @default(true)
+  aluno         Aluno       @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  responsavel   Responsavel @relation(fields: [responsavelId], references: [id], onDelete: Cascade)
+
+  @@id([alunoId, responsavelId])
+}
+
+/// Pessoas autorizadas a buscar o aluno na saída
+model Autorizado {
+  id         String  @id @default(cuid())
+  alunoId    String
+  nome       String
+  parentesco String
+  documento  String?
+  aluno      Aluno   @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+}
+
+model Matricula {
+  id               String         @id @default(cuid())
+  alunoId          String
+  aluno            Aluno          @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  turmaId          String
+  turma            Turma          @relation(fields: [turmaId], references: [id])
+  ano              Int
+  etapa            EtapaMatricula @default(DOCUMENTOS)
+  descontoPct      Int            @default(0)
+  descontoAprovado Boolean        @default(false)
+  observacao       String?
+  docCertidao      Boolean        @default(false)
+  docResponsavel   Boolean        @default(false)
+  docResidencia    Boolean        @default(false)
+  docHistorico     Boolean        @default(false)
+  docVacina        Boolean        @default(false)
+  criadoEm         DateTime       @default(now())
+  atualizadoEm     DateTime       @updatedAt
+
+  @@index([etapa])
+}
+
+model Passagem {
+  id            String         @id @default(cuid())
+  alunoId       String
+  aluno         Aluno          @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  tipo          TipoPassagem
+  origem        OrigemPassagem
+  atraso        Boolean        @default(false)
+  motivo        String?
+  acompanhante  String?
+  ocorridaEm    DateTime       @default(now())
+  /// Data no fuso da escola, "AAAA-MM-DD", para consultas do dia
+  dataLocal     String
+  usuarioId     String?
+  usuario       Usuario?       @relation(fields: [usuarioId], references: [id])
+  dispositivoId String?
+  dispositivo   Dispositivo?   @relation(fields: [dispositivoId], references: [id])
+
+  @@index([dataLocal, alunoId])
+  @@index([ocorridaEm])
+}
+
+/// Catracas e leitores que usam a API
+model Dispositivo {
+  id            String     @id @default(cuid())
+  nome          String
+  tokenHash     String     @unique
+  ativo         Boolean    @default(true)
+  ultimoContato DateTime?
+  criadoEm      DateTime   @default(now())
+  passagens     Passagem[]
+}
+
+/// Fila de avisos para responsáveis (o envio por app/WhatsApp entra na Fase 4)
+model Notificacao {
+  id            String   @id @default(cuid())
+  responsavelId String
+  canal         String   @default("APP")
+  titulo        String
+  mensagem      String
+  status        String   @default("PENDENTE")
+  criadoEm      DateTime @default(now())
+
+  @@index([status])
+}
+
+model Auditoria {
+  id         String   @id @default(cuid())
+  usuarioId  String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  acao       String
+  entidade   String
+  entidadeId String?
+  detalhes   Json?
+  criadoEm   DateTime @default(now())
+
+  @@index([entidade, entidadeId])
+  @@index([criadoEm])
+}
