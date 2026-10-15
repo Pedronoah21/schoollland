@@ -13,7 +13,7 @@ Esta é a **Fase 1**: a base da escola funcionando com dados reais.
 | API para catraca (online e sem internet) — veja [docs/catraca.md](docs/catraca.md) | |
 | Auditoria de tudo que mexe em aluno, matrícula, acesso e equipe | |
 
-O protótipo navegável com as quatro fases serve de referência visual para as próximas etapas.
+O modelo navegável do sistema completo está em [`modelo/index.html`](modelo/index.html): baixe e abra no navegador, ou publique pelo GitHub Pages (Settings → Pages → branch `main`, pasta `/`) e acesse `/modelo/`. Ele serve de referência visual para as próximas fases.
 
 ---
 
