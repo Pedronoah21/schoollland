@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // A verificação completa (assinatura, usuário ativo, permissão) acontece em cada página.
 const PUBLICAS = ["/login", "/primeiro-acesso", "/api/catraca"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (PUBLICAS.some((p) => pathname === p || pathname.startsWith(p + "/"))) return NextResponse.next();
   if (!req.cookies.get("patio_sessao")) {

@@ -5,31 +5,34 @@
   "description": "Sistema de gestão escolar: secretaria, matrícula, portaria com catraca e painel da escola.",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --skip-generate && next build",
-    "start": "next start",
+    "build": "prisma generate && next build",
+    "start": "prisma db push --skip-generate && next start",
     "test": "tsx --test src/lib/regras/*.test.ts src/lib/*.test.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9"
   },
   "dependencies": {
     "@prisma/client": "6.9.0",
     "bcryptjs": "3.0.2",
     "jose": "6.0.11",
-    "next": "15.3.8",
-    "react": "19.1.4",
-    "react-dom": "19.1.4",
+    "next": "^16.4.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "zod": "3.25.56"
   },
   "devDependencies": {
     "@types/node": "22.15.30",
-    "@types/react": "19.1.6",
-    "@types/react-dom": "19.1.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "prisma": "6.9.0",
     "tsx": "4.19.4",
     "typescript": "5.8.3"
+  },
+  "overrides": {
+    "sharp": "^0.35.5"
   }
 }

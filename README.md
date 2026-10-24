@@ -17,35 +17,22 @@ O modelo navegável do sistema completo está em [`modelo/index.html`](modelo/in
 
 ---
 
-## Como colocar no ar (sem precisar programar)
+## Onde o sistema roda
 
-Você vai usar dois serviços com plano gratuito para começar: **Neon** (o banco de dados) e
-**Vercel** (onde o sistema roda). Leva uns 20 minutos.
+O sistema está publicado no **Render** (serviço `patio-escolar` e banco `patio-escolar-db`).
+A cada envio para a branch `main`, o Render monta e publica a nova versão sozinho.
 
-### 1. Banco de dados no Neon
+Configuração do serviço no Render:
 
-1. Crie uma conta em <https://neon.tech> (pode entrar com a conta do GitHub).
-2. Clique em **New Project**. Nome: `patio`. Em **Region**, escolha **AWS São Paulo (sa-east-1)**,
-   para os dados dos alunos ficarem no Brasil.
-3. Na tela do projeto, clique em **Connect** e copie o endereço que começa com `postgresql://`.
-   Guarde: é o `DATABASE_URL`.
+| Campo | Valor |
+| --- | --- |
+| Build Command | `npm install && npx prisma generate && npx next build` |
+| Start Command | `npx prisma db push --skip-generate && npx next start` |
+| `DATABASE_URL` | *Internal Database URL* do banco `patio-escolar-db` |
+| `SESSION_SECRET` | chave aleatória com pelo menos 32 caracteres (trocar desconecta todo mundo) |
+| `NODE_VERSION` | `22` |
 
-### 2. Chave secreta
-
-Gere uma senha longa e aleatória com **pelo menos 40 caracteres**, só letras e números
-(qualquer gerador de senhas serve). Guarde: é o `SESSION_SECRET`. Ela protege os logins;
-não compartilhe e não troque depois sem motivo (trocar desconecta todo mundo).
-
-### 3. Publicar na Vercel
-
-1. Crie uma conta em <https://vercel.com> entrando com o GitHub.
-2. Clique em **Add New → Project** e escolha o repositório deste sistema.
-3. Abra **Environment Variables** e cadastre as duas:
-   - `DATABASE_URL` = o endereço do Neon
-   - `SESSION_SECRET` = a chave do passo 2
-4. Clique em **Deploy**. Na primeira vez, o sistema cria as tabelas do banco sozinho.
-5. Ao terminar, a Vercel mostra o endereço (algo como `patio-escolar.vercel.app`).
-   Depois você pode ligar um domínio próprio, como `sistema.suaescola.com.br`.
+O comando de início atualiza as tabelas do banco antes de abrir o sistema.
 
 ### 4. Primeiro acesso
 
@@ -60,8 +47,11 @@ e cria a sua conta de administrador. Ela só aparece uma vez. Depois:
 
 ### Antes de usar com dados reais
 
-- Passe o Neon para um plano pago quando os dados forem reais: ele guarda o histórico do banco
-  e permite voltar no tempo em caso de erro.
+- O banco gratuito do Render expira em 30 dias e o serviço gratuito "dorme" quando fica parado.
+  Antes de usar com dados reais, passe os dois para planos pagos, com backup do banco ligado.
+- O Render não tem servidores no Brasil; os dados ficam nos EUA (Virgínia). Avalie com a escola
+  se isso atende à política de privacidade (LGPD) ou se o banco deve ir para um provedor com região
+  em São Paulo.
 - Restrinja quem tem perfil de administrador.
 - Para trazer os dados do Sponte, peça à escola a exportação em planilha; a importação automática
   pode ser feita como próximo passo.
@@ -70,7 +60,7 @@ e cria a sua conta de administrador. Ela só aparece uma vez. Depois:
 
 ## Para quem for desenvolver
 
-Tecnologias: Next.js 15 (App Router, Server Actions), TypeScript, Prisma, PostgreSQL.
+Tecnologias: Next.js 16 (App Router, Server Actions), TypeScript, Prisma, PostgreSQL.
 
 ```bash
 cp .env.example .env          # preencha DATABASE_URL e SESSION_SECRET
